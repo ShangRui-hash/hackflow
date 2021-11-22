@@ -65,8 +65,12 @@ func (c *Container) Get(name string) Tool {
 	return tool
 }
 
-func GetAllTools() []string {
-	return container.allTools
+//GetAllTools 获取全部工具
+func GetAllTools() (tools []Tool) {
+	for i := range container.allTools {
+		tools = append(tools, container.Get(container.allTools[i]))
+	}
+	return tools
 }
 
 //SetDebug 是否开启debug模式
