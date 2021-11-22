@@ -32,7 +32,6 @@ func (s *Subfinder) ExecPath() (string, error) {
 
 func (s *Subfinder) download() error {
 	if err := GetGo().Install("github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"); err != nil {
-		logger.Error("doswnload url-collector failed:", err)
 		return err
 	}
 	s.execPath = build.Default.GOPATH + "/bin/subfinder"

@@ -30,7 +30,6 @@ func (s *Httpx) ExecPath() (string, error) {
 
 func (s *Httpx) download() error {
 	if err := GetGo().Install("github.com/projectdiscovery/httpx/cmd/httpx@latest"); err != nil {
-		logger.Error("doswnload url-collector failed:", err)
 		return err
 	}
 	s.execPath = build.Default.GOPATH + "/bin/httpx"
