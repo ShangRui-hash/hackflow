@@ -14,7 +14,6 @@ const (
 	SQLMAP        = "sqlmap"
 	URL_COLLECTOR = "url_collector"
 	DIRSEARCH     = "dirsearch"
-	ONE_FOR_ALL   = "one_for_all"
 	KSUBDOMAIN    = "ksubdomain"
 	SUBFINDER     = "subfinder"
 	HTTPX         = "httpx"
@@ -24,6 +23,16 @@ var (
 	container *Container
 	logger    = logrus.New()
 	SavePath  = build.Default.GOPATH + "/hackflow"
+	newTool   = map[string]func() Tool{
+		GO:            newGo,
+		GIT:           newGit,
+		SQLMAP:        newSqlmap,
+		URL_COLLECTOR: newUrlCollector,
+		DIRSEARCH:     newDirSearch,
+		KSUBDOMAIN:    newKSubdomain,
+		SUBFINDER:     newSubfinder,
+		HTTPX:         newHttpx,
+	}
 )
 
 type Container struct {
@@ -33,6 +42,7 @@ type Container struct {
 
 type Tool interface {
 	Name() string
+	Desp() string
 	ExecPath() (string, error)
 	download() error
 }
@@ -45,7 +55,6 @@ func init() {
 			SQLMAP,
 			URL_COLLECTOR,
 			DIRSEARCH,
-			ONE_FOR_ALL,
 			KSUBDOMAIN,
 			SUBFINDER,
 			HTTPX,
@@ -53,15 +62,19 @@ func init() {
 	}
 }
 
+//Set 将工具注册到注册树
 func (c *Container) Set(tool Tool) {
 	c.tools[tool.Name()] = tool
 }
 
+//Get 从注册树上获取工具
 func (c *Container) Get(name string) Tool {
 	tool, exist := c.tools[name]
-	if !exist {
-		return nil
+	if exist {
+		return tool
 	}
+	tool = newTool[name]()
+	container.Set(tool)
 	return tool
 }
 

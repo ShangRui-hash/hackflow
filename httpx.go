@@ -10,11 +10,22 @@ import (
 type Httpx struct {
 	name     string
 	execPath string
+	desp     string
+}
+
+func newHttpx() Tool {
+	return &Httpx{
+		name: HTTPX,
+		desp: "并发可靠的http请求工具",
+	}
 }
 
 //Name 获取工具名
 func (s *Httpx) Name() string {
 	return s.name
+}
+func (s *Httpx) Desp() string {
+	return s.desp
 }
 
 //ExecPath 获取工具执行路径

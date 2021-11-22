@@ -11,12 +11,25 @@ import (
 
 type Subfinder struct {
 	name     string
+	desp     string
 	execPath string
+}
+
+func newSubfinder() Tool {
+	return &Subfinder{
+		name: SUBFINDER,
+		desp: "被动子域名收集工具",
+	}
 }
 
 // Name 获取工具名称
 func (s *Subfinder) Name() string {
 	return s.name
+}
+
+//Desp 获取工具描述
+func (s *Subfinder) Desp() string {
+	return s.desp
 }
 
 //ExecPath 获取工具执行路径,如果不存在则下载
@@ -38,6 +51,7 @@ func (s *Subfinder) download() error {
 	return nil
 }
 
+//
 func GetSubfinder() *Subfinder {
 	if tool := container.Get(SUBFINDER); tool != nil {
 		return tool.(*Subfinder)

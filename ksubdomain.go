@@ -12,11 +12,23 @@ import (
 type KSubdomain struct {
 	name     string
 	execPath string
+	desp     string
+}
+
+func newKSubdomain() Tool {
+	return &KSubdomain{
+		name: KSUBDOMAIN,
+		desp: "主动域名爆破、域名验证",
+	}
 }
 
 //Name 返回工具名
 func (k *KSubdomain) Name() string {
 	return k.name
+}
+
+func (k *KSubdomain) Desp() string {
+	return k.desp
 }
 
 //ExecPath 返回工具执行路径

@@ -10,11 +10,25 @@ import (
 type Go struct {
 	name     string
 	execPath string
+	desp     string
+}
+
+func newGo() Tool {
+	return &Go{
+		name:     "go",
+		execPath: "go",
+		desp:     "go 工具链",
+	}
 }
 
 func (g *Go) Name() string {
 	return g.name
 }
+
+func (g *Go) Desp() string {
+	return g.desp
+}
+
 func (g *Go) ExecPath() (string, error) {
 	return g.execPath, nil
 }

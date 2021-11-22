@@ -13,6 +13,14 @@ import (
 type DirSearch struct {
 	name     string
 	execPath string
+	desp     string
+}
+
+func newDirSearch() Tool {
+	return &DirSearch{
+		name: DIRSEARCH,
+		desp: "目录扫描工具",
+	}
 }
 
 type DirSearchResult struct {
@@ -27,6 +35,11 @@ var resultReg = regexp.MustCompile(`^\[\d{2}:\d{2}:\d{2}\]\s{1}(\d{3})\s{1}-\s{2
 //Name 获取名称
 func (d *DirSearch) Name() string {
 	return d.name
+}
+
+//Desc 获取描述
+func (d *DirSearch) Desp() string {
+	return d.desp
 }
 
 //ExecPath 返回执行路径
@@ -59,15 +72,6 @@ func (d *DirSearch) download() error {
 		logger.Debug("依赖下载完成:", string(output))
 	}
 	return nil
-}
-
-//SetDebug 是否开启Debug
-func (d *DirSearch) SetDebug(isDebug bool) {
-	if isDebug {
-		logger.SetLevel(logrus.DebugLevel)
-	} else {
-		logger.SetLevel(logrus.ErrorLevel)
-	}
 }
 
 func GetDirSearch(isDebug bool) (*DirSearch, error) {

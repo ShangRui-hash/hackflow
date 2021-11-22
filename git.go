@@ -8,7 +8,17 @@ import (
 type Git struct {
 	name     string
 	execPath string
+	desp     string
 }
+
+func newGit() Tool {
+	return &Git{
+		name:     "git",
+		desp:     "git",
+		execPath: "git",
+	}
+}
+
 type CloneConfig struct {
 	Url      string
 	SavePath string
@@ -18,6 +28,11 @@ type CloneConfig struct {
 func (g *Git) Name() string {
 	return g.name
 }
+
+func (g *Git) Desp() string {
+	return g.desp
+}
+
 func (g *Git) ExecPath() (string, error) {
 	return g.execPath, nil
 }

@@ -3,7 +3,16 @@ package hackflow
 type Sqlmap struct {
 	name     string
 	execPath string
+	desp     string
 }
+
+func newSqlmap() Tool {
+	return &Sqlmap{
+		name: SQLMAP,
+		desp: "自动化sql注入工具",
+	}
+}
+
 type SqlmapConfig struct {
 	TargetURL   string
 	Proxy       string
@@ -15,9 +24,13 @@ type SqlmapConfig struct {
 func (s *Sqlmap) Name() string {
 	return s.name
 }
+func (s *Sqlmap) Desp() string {
+	return s.desp
+}
 func (s *Sqlmap) ExecPath() (string, error) {
 	return s.execPath, nil
 }
+
 func (s *Sqlmap) download() error {
 	return nil
 }

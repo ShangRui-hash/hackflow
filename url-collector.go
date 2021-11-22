@@ -11,26 +11,27 @@ import (
 
 type UrlCollector struct {
 	name     string
+	desp     string
 	execPath string
 }
 
-func GetUrlCollector() (*UrlCollector, error) {
-	tool := container.Get(URL_COLLECTOR)
-	if tool == nil {
-		tool = &UrlCollector{
-			name: URL_COLLECTOR,
-		}
-		if err := tool.download(); err != nil {
-			return nil, err
-		}
-		container.Set(tool)
+func newUrlCollector() Tool {
+	return &UrlCollector{
+		name: URL_COLLECTOR,
+		desp: "谷歌、百度、必应搜索引擎采集工具",
 	}
-	return tool.(*UrlCollector), nil
+}
+
+func GetUrlCollector() *UrlCollector {
+	return container.Get(URL_COLLECTOR).(*UrlCollector)
 }
 
 //Name 返回工具名称
 func (u *UrlCollector) Name() string {
 	return u.name
+}
+func (u *UrlCollector) Desp() string {
+	return u.desp
 }
 
 //ExecPath 返回执行路径,如果没有,则下载
