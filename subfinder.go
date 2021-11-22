@@ -49,14 +49,15 @@ func GetSubfinder() *Subfinder {
 }
 
 type SubfinderRunConfig struct {
-	Proxy        string `flag:"-proxy"`
-	Domain       string `flag:"-d"`
-	RoutineCount int    `flag:"-t"`
-	DomainCh     chan string
+	DomainCh                       chan string
+	Proxy                          string `flag:"-proxy"`
+	Domain                         string `flag:"-d"`
+	RoutineCount                   int    `flag:"-t"`
+	RemoveWildcardAndDeadSubdomain bool   `flag:"-nW"`
 }
 
 func (s *Subfinder) Run(config *SubfinderRunConfig) (subdomainCh chan string, err error) {
-	args := append([]string{"-silent", "-nW"}, parseConfig(*config)...)
+	args := append([]string{"-silent", "-nC"}, parseConfig(*config)...)
 	execPath, err := s.ExecPath()
 	if err != nil {
 		return nil, err

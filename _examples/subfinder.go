@@ -9,11 +9,6 @@ import (
 
 func main() {
 	hackflow.SetDebug(true)
-	subfinder, err := hackflow.GetSubfinder()
-	if err != nil {
-		logrus.Error("get subfinder failed,err:", err)
-		return
-	}
 	domainCh := make(chan string, 1024)
 	domainList := []string{
 		"lenovo.com",
@@ -31,11 +26,24 @@ func main() {
 		}
 		close(domainCh)
 	}()
-	subdomainCh, err := subfinder.Run(hackflow.SubfinderRunConfig{
-		Proxy:    "socks://127.0.0.1:7890",
-		DomainCh: domainCh,
+	stream := hackflow.NewStream()
+	subdomainCh, err := hackflow.GetSubfinder().Run(&hackflow.SubfinderRunConfig{
+		Proxy:        "socks://127.0.0.1:7890",
+		DomainCh:     domainCh,
+		RoutineCount: 1000,
 	})
-	for subdomain := range subdomainCh {
+	if err != nil {
+		logrus.Errorf("subfinder run failed,err:%s", err)
+		return
+	}
+	stream.AddSrc(subdomainCh)
+	stream.AddFilter(func(line string) string {
+		return "我是过滤器1" + line
+	})
+	stream.AddFilter(func(line string) string {
+		return "我是过滤器2" + line
+	})
+	for subdomain := range stream.GetDst() {
 		fmt.Println(subdomain)
 	}
 }
