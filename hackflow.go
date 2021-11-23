@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/build"
 	"reflect"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 )
@@ -37,7 +38,7 @@ var (
 
 type Container struct {
 	allTools []string
-	tools    map[string]Tool
+	tools    sync.Map
 }
 
 type Tool interface {
@@ -48,9 +49,8 @@ type Tool interface {
 }
 
 func init() {
-	tools := make(map[string]Tool)
 	container = &Container{
-		tools: tools,
+		tools: sync.Map{},
 		allTools: []string{
 			SQLMAP,
 			URL_COLLECTOR,
@@ -64,16 +64,15 @@ func init() {
 
 //Set 将工具注册到注册树
 func (c *Container) Set(tool Tool) {
-	c.tools[tool.Name()] = tool
+	c.tools.Store(tool.Name(), tool)
 }
 
 //Get 从注册树上获取工具
 func (c *Container) Get(name string) Tool {
-	tool, exist := c.tools[name]
-	if exist {
-		return tool
+	if tool, ok := c.tools.Load(name); ok {
+		return tool.(Tool)
 	}
-	tool = newTool[name]()
+	tool := newTool[name]()
 	container.Set(tool)
 	return tool
 }
