@@ -35,9 +35,11 @@ func (f *Stream) AddSrc(src chan string) {
 	f.src = append(f.src, src)
 }
 
-//AddDst 添加一个输出管道
-func (f *Stream) AddDst(dst chan string) {
-	f.dst = append(f.dst, dst)
+//SetDstCount 设置输出管道的个数
+func (f *Stream) SetDstCount(count int) {
+	for i := 0; i < count; i++ {
+		f.dst = append(f.dst, make(chan string, 1024))
+	}
 }
 
 //GetDst 获取输出流
@@ -45,17 +47,19 @@ func (s *Stream) GetDst() []chan string {
 	var wg sync.WaitGroup
 	for _, srcCh := range s.src {
 		wg.Add(1)
-		for _, dstCh := range s.dst {
-			go func(srcCh, dstCh chan string) {
-				defer wg.Done()
+		go func(srcCh chan string, dst []chan string) {
+			defer wg.Done()
+			//将输入管道的数据给每个输出管道都拷贝一份，每个输出管道中的内容是相同的
+			for _, dstCh := range s.dst {
 				for line := range srcCh {
 					for _, filter := range s.filters {
 						line = filter(line)
 					}
 					dstCh <- line
 				}
-			}(srcCh, dstCh)
-		}
+			}
+		}(srcCh, s.dst)
+
 	}
 	go func() {
 		logger.Debug("wait for all goroutine")
