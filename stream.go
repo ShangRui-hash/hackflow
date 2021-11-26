@@ -26,20 +26,23 @@ func defaultFilter(line string) string {
 }
 
 //SetFilter 设置过滤器
-func (f *Stream) AddFilter(filter func(string) string) {
-	f.filters = append(f.filters, filter)
+func (s *Stream) AddFilter(filter func(string) string) *Stream {
+	s.filters = append(s.filters, filter)
+	return s
 }
 
 //AddSource 添加一个源
-func (f *Stream) AddSrc(src chan string) {
-	f.src = append(f.src, src)
+func (s *Stream) AddSrc(src chan string) *Stream {
+	s.src = append(s.src, src)
+	return s
 }
 
 //SetDstCount 设置输出管道的个数
-func (f *Stream) SetDstCount(count int) {
+func (s *Stream) SetDstCount(count int) *Stream {
 	for i := 0; i < count; i++ {
-		f.dst = append(f.dst, make(chan string, 1024))
+		s.dst = append(s.dst, make(chan string, 1024))
 	}
+	return s
 }
 
 //GetDst 获取输出流
@@ -49,17 +52,17 @@ func (s *Stream) GetDst() []chan string {
 		wg.Add(1)
 		go func(srcCh chan string, dst []chan string) {
 			defer wg.Done()
-			//将输入管道的数据给每个输出管道都拷贝一份，每个输出管道中的内容是相同的
-			for _, dstCh := range s.dst {
-				for line := range srcCh {
-					for _, filter := range s.filters {
-						line = filter(line)
-					}
+			//将输入管道的数据给每个输出管道都拷贝一份，每个输出管道中的内容是相同的g
+			for line := range srcCh {
+				for _, filter := range s.filters {
+					line = filter(line)
+				}
+				for _, dstCh := range s.dst {
 					dstCh <- line
 				}
 			}
-		}(srcCh, s.dst)
 
+		}(srcCh, s.dst)
 	}
 	go func() {
 		logger.Debug("wait for all goroutine")

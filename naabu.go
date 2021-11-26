@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"go/build"
+	"io"
 	"os/exec"
 
 	"github.com/sirupsen/logrus"
@@ -44,29 +45,36 @@ type NaabuRunConfig struct {
 	HostCh       chan string
 }
 
-func (n *Naabu) Run(config *NaabuRunConfig) (resultCh chan string, err error) {
+func (n *Naabu) Run(config *NaabuRunConfig) (chan string, error) {
 	execPath, err := n.ExecPath()
 	if err != nil {
 		logger.Error("naabu exec path failed:", err)
-		return
+		return nil, err
 	}
+	logger.Debug("naabu exec path:", execPath)
 	args := append([]string{"-silent", "-json"}, parseConfig(*config)...)
 	cmd := exec.Command(execPath, args...)
+	//获取标准输出
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		logger.Error("cmd.StdoutPipe failed,err:", err)
-		return
+		return nil, err
 	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+	output := io.MultiReader(stdout, stderr)
 	//获取标准输入
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		logger.Error("cmd.StdinPipe failed,err:", err)
-		return
+		return nil, err
 	}
 	if config.HostCh != nil {
 		//写入标准输入
 		go func() {
 			for domain := range config.HostCh {
+				logger.Debug(domain)
 				fmt.Fprintln(stdin, domain)
 			}
 			stdin.Close()
@@ -78,15 +86,15 @@ func (n *Naabu) Run(config *NaabuRunConfig) (resultCh chan string, err error) {
 		return nil, err
 	}
 	//输出
-	resultCh = make(chan string, 1024)
-
+	resultCh := make(chan string, 1024)
 	go func() {
-		scanner := bufio.NewScanner(stdout)
+		scanner := bufio.NewScanner(output)
 		for scanner.Scan() {
-			resultCh <- scanner.Text()
+			result := scanner.Text()
+			logrus.Debug(result)
+			resultCh <- result
 		}
 		close(resultCh)
 	}()
-
-	return nil, nil
+	return resultCh, nil
 }
