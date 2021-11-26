@@ -39,12 +39,12 @@ func (n *Naabu) Download() (string, error) {
 }
 
 //NabbuRunConfig 工具运行配置
-type NabbuRunConfig struct {
+type NaabuRunConfig struct {
 	RoutineCount int `flag:"-c"`
 	HostCh       chan string
 }
 
-func (n *Naabu) Run(config *NabbuRunConfig) (resultCh chan string, err error) {
+func (n *Naabu) Run(config *NaabuRunConfig) (resultCh chan string, err error) {
 	execPath, err := n.ExecPath()
 	if err != nil {
 		logger.Error("naabu exec path failed:", err)
