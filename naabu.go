@@ -50,7 +50,7 @@ func (n *Naabu) Run(config *NabbuRunConfig) (resultCh chan string, err error) {
 		logger.Error("naabu exec path failed:", err)
 		return
 	}
-	args := append([]string{"-silent"}, parseConfig(*config)...)
+	args := append([]string{"-silent", "-json"}, parseConfig(*config)...)
 	cmd := exec.Command(execPath, args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
