@@ -8,7 +8,17 @@ import (
 )
 
 func main() {
-	hosts := []string{"yihutest.lenovo.com"}
+	hosts := []string{
+		"yihutest.lenovo.com",
+		"mp.csw.lenovo.com",
+		"tools.dds.lenovo.com",
+		"vaultstudio.lenovo.com",
+		"api-us.csw.lenovo.com",
+		"sun.cnno1.holo-one.lenovo.com",
+		"turn.cnno1.holo-one.lenovo.com",
+		"vantagefeed-origin.csw.lenovo.com",
+		"chs.lenovo.com",
+	}
 	hostCh := make(chan string, 1024)
 	for _, host := range hosts {
 		hostCh <- host
