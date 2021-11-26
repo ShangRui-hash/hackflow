@@ -7,20 +7,23 @@ import (
 	"strings"
 
 	"github.com/serkanalgur/phpfuncs"
-	"github.com/sirupsen/logrus"
 )
 
 type DirSearch struct {
-	name     string
-	execPath string
-	desp     string
+	BaseTool
 }
 
 func newDirSearch() Tool {
 	return &DirSearch{
-		name: DIRSEARCH,
-		desp: "目录扫描工具",
+		BaseTool: BaseTool{
+			name: DIRSEARCH,
+			desp: "目录扫描工具",
+		},
 	}
+}
+
+func GetDirSearch(isDebug bool) *DirSearch {
+	return container.Get(DIRSEARCH).(*DirSearch)
 }
 
 type DirSearchResult struct {
@@ -32,61 +35,30 @@ type DirSearchResult struct {
 
 var resultReg = regexp.MustCompile(`^\[\d{2}:\d{2}:\d{2}\]\s{1}(\d{3})\s{1}-\s{2}([0-9A-Z]{4,5})\s+-\s+(.+)`)
 
-//Name 获取名称
-func (d *DirSearch) Name() string {
-	return d.name
-}
-
-//Desc 获取描述
-func (d *DirSearch) Desp() string {
-	return d.desp
-}
-
 //ExecPath 返回执行路径
 func (d *DirSearch) ExecPath() (string, error) {
-	if len(d.execPath) == 0 {
-		if err := d.download(); err != nil {
-			logger.Errorf("download %s failed,err:", err)
-			return "", err
-		}
-	}
-	return d.execPath, nil
+	return d.BaseTool.ExecPath(d.Download)
 }
 
 //download 下载源码
-func (d *DirSearch) download() error {
-	d.execPath = SavePath + "/dirsearch/dirsearch.py"
+func (d *DirSearch) Download() (string, error) {
+	execPath := SavePath + "/dirsearch/dirsearch.py"
 	if !phpfuncs.FileExists(d.execPath) {
 		logger.Debug("正在下载dirsearch")
 		output, err := exec.Command("pip3", "install", "dirsearch", "--target="+SavePath).CombinedOutput()
 		if err != nil {
 			logger.Error("pip3 install failed,err:", err, "output:", string(output))
-			return err
+			return "", err
 		}
 		logger.Debug("下载源码完成，开始下载依赖:", string(output))
 		output, err = exec.Command("pip3", "install", "-r", SavePath+"/dirsearch/requirements.txt").CombinedOutput()
 		if err != nil {
 			logger.Error("pip3 install -r failed,err:", err, "output:", string(output))
-			return err
+			return "", err
 		}
 		logger.Debug("依赖下载完成:", string(output))
 	}
-	return nil
-}
-
-func GetDirSearch(isDebug bool) (*DirSearch, error) {
-	if tool := container.Get(DIRSEARCH); tool != nil {
-		return tool.(*DirSearch), nil
-	}
-	tool := &DirSearch{
-		name: DIRSEARCH,
-	}
-	if err := tool.download(); err != nil {
-		logrus.Error("tool.download failed,err:", err)
-		return nil, err
-	}
-	container.Set(tool)
-	return tool, nil
+	return execPath, nil
 }
 
 type DirSearchConfig struct {

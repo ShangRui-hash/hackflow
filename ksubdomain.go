@@ -10,57 +10,45 @@ import (
 )
 
 type KSubdomain struct {
-	name     string
-	execPath string
-	desp     string
+	BaseTool
 }
 
 func newKSubdomain() Tool {
 	return &KSubdomain{
-		name: KSUBDOMAIN,
-		desp: "主动域名爆破、域名验证",
+		BaseTool: BaseTool{
+			name: KSUBDOMAIN,
+			desp: "主动域名爆破、域名验证",
+		},
 	}
 }
 
-//Name 返回工具名
-func (k *KSubdomain) Name() string {
-	return k.name
-}
-
-func (k *KSubdomain) Desp() string {
-	return k.desp
+//GetKSubdomain 获取工具对象
+func GetKSubdomain() *KSubdomain {
+	return container.Get(KSUBDOMAIN).(*KSubdomain)
 }
 
 //ExecPath 返回工具执行路径
 func (k *KSubdomain) ExecPath() (string, error) {
-	if k.execPath == "" {
-		if err := k.download(); err != nil {
-			logger.Errorf("download %s failed,err:%v", k.Name(), err)
-			return "", err
-		}
-	}
-	return k.execPath, nil
+	return k.BaseTool.ExecPath(k.Download)
 }
 
 //download 自动安装工具
-func (k *KSubdomain) download() error {
-	k.execPath = SavePath + "/ksubdomain/cmd/ksubdomain"
+func (k *KSubdomain) Download() (string, error) {
+	execPath := SavePath + "/ksubdomain/cmd/ksubdomain"
 	dirPath := SavePath + "/ksubdomain"
-	if !phpfuncs.FileExists(dirPath) {
-		err := GetGit().Clone(CloneConfig{
-			Url:      "https://github.com.cnpmjs.org/knownsec/ksubdomain",
-			Depth:    1,
-			SavePath: SavePath + "/ksubdomain/",
-		})
-		if err != nil {
-			logger.Error("get clone failed,err:", err)
-			return err
-		}
+	err := GetGit().Clone(CloneConfig{
+		Url:      "https://github.com.cnpmjs.org/knownsec/ksubdomain",
+		Depth:    1,
+		SavePath: dirPath,
+	})
+	if err != nil {
+		logger.Error("get clone failed,err:", err)
+		return "", err
 	}
-	if !phpfuncs.FileExists(k.execPath) {
+	if !phpfuncs.FileExists(execPath) {
 		if err := GetGo().Mod(SavePath+"/ksubdomain", "download"); err != nil {
 			logger.Error("get mod failed,err:", err)
-			return err
+			return "", err
 		}
 		err := GetGo().Build(BuildConfig{
 			Path:  SavePath + "/ksubdomain/cmd",
@@ -70,18 +58,7 @@ func (k *KSubdomain) download() error {
 			logger.Error("get build failed,err:", err)
 		}
 	}
-	return nil
-}
-
-//GetKSubdomain 获取工具对象
-func GetKSubdomain() *KSubdomain {
-	if tool := container.Get(KSUBDOMAIN); tool != nil {
-		return tool.(*KSubdomain)
-	}
-	container.Set(&KSubdomain{
-		name: KSUBDOMAIN,
-	})
-	return container.Get(KSUBDOMAIN).(*KSubdomain)
+	return execPath, nil
 }
 
 type KSubdomainRunConfig struct {

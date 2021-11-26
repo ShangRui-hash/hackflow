@@ -1,8 +1,12 @@
 package hackflow
 
 import (
+	"context"
 	"fmt"
 	"go/build"
+	"os"
+	"os/exec"
+	"os/signal"
 	"reflect"
 	"sync"
 
@@ -11,6 +15,7 @@ import (
 
 const (
 	GO            = "go"
+	PYTHON        = "python"
 	GIT           = "git"
 	SQLMAP        = "sqlmap"
 	URL_COLLECTOR = "url_collector"
@@ -18,34 +23,28 @@ const (
 	KSUBDOMAIN    = "ksubdomain"
 	SUBFINDER     = "subfinder"
 	HTTPX         = "httpx"
+	GIT_HACK      = "git_hack"
+	GOWAFW00F     = "go-wafw00f"
+	NAABU         = "naabu"
 )
 
 var (
 	container *Container
 	logger    = logrus.New()
 	SavePath  = build.Default.GOPATH + "/hackflow"
-	newTool   = map[string]func() Tool{
-		GO:            newGo,
-		GIT:           newGit,
-		SQLMAP:        newSqlmap,
-		URL_COLLECTOR: newUrlCollector,
-		DIRSEARCH:     newDirSearch,
-		KSUBDOMAIN:    newKSubdomain,
-		SUBFINDER:     newSubfinder,
-		HTTPX:         newHttpx,
-	}
 )
 
 type Container struct {
 	allTools []string
 	tools    sync.Map
+	newTool  map[string]func() Tool
 }
 
 type Tool interface {
 	Name() string
 	Desp() string
 	ExecPath() (string, error)
-	download() error
+	Download() (string, error)
 }
 
 func init() {
@@ -58,6 +57,23 @@ func init() {
 			KSUBDOMAIN,
 			SUBFINDER,
 			HTTPX,
+			GIT_HACK,
+			GOWAFW00F,
+			NAABU,
+		},
+		newTool: map[string]func() Tool{
+			GO:            newGo,
+			PYTHON:        newPython,
+			GIT:           newGit,
+			SQLMAP:        newSqlmap,
+			URL_COLLECTOR: newUrlCollector,
+			DIRSEARCH:     newDirSearch,
+			KSUBDOMAIN:    newKSubdomain,
+			SUBFINDER:     newSubfinder,
+			HTTPX:         newHttpx,
+			GIT_HACK:      newGitHack,
+			GOWAFW00F:     newGoWafw00f,
+			NAABU:         newNaabu,
 		},
 	}
 }
@@ -72,7 +88,7 @@ func (c *Container) Get(name string) Tool {
 	if tool, ok := c.tools.Load(name); ok {
 		return tool.(Tool)
 	}
-	tool := newTool[name]()
+	tool := c.newTool[name]()
 	container.Set(tool)
 	return tool
 }
@@ -117,4 +133,59 @@ func parseConfig(config interface{}) (args []string) {
 	}
 	logger.Debug("parse config to args:", args)
 	return args
+}
+
+//CmdExec fork子进程
+func CmdExec(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func(ctx context.Context) {
+	LOOP:
+		for {
+			select {
+			case <-ctx.Done():
+				break LOOP
+			case <-c:
+				cmd.Process.Release()
+				cmd.Process.Kill()
+				break LOOP
+			}
+		}
+	}(ctx)
+	if err := cmd.Run(); err != nil {
+		logger.Error("cmd.Run failed,err:", err)
+		return err
+	}
+	return nil
+}
+
+func TryExec(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func(ctx context.Context) {
+	LOOP:
+		for {
+			select {
+			case <-ctx.Done():
+				break LOOP
+			case <-c:
+				cmd.Process.Release()
+				cmd.Process.Kill()
+				break LOOP
+			}
+		}
+	}(ctx)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
 }

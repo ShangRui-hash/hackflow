@@ -8,32 +8,30 @@ import (
 )
 
 type Go struct {
-	name     string
-	execPath string
-	desp     string
+	BaseTool
 }
 
 func newGo() Tool {
 	return &Go{
-		name:     "go",
-		execPath: "go",
-		desp:     "go 工具链",
+		BaseTool: BaseTool{
+			name:     "go",
+			execPath: "go",
+			desp:     "go 工具链",
+		},
 	}
 }
 
-func (g *Go) Name() string {
-	return g.name
+//GetGo 获取go对象
+func GetGo() *Go {
+	return container.Get(GO).(*Go)
 }
 
-func (g *Go) Desp() string {
-	return g.desp
+func (g *Go) Download() (string, error) {
+	return "", nil
 }
 
 func (g *Go) ExecPath() (string, error) {
-	return g.execPath, nil
-}
-func (g *Go) download() error {
-	return nil
+	return g.BaseTool.ExecPath(g.Download)
 }
 
 //Install go install
@@ -87,17 +85,4 @@ func (g *Go) Build(config BuildConfig) error {
 	}
 	logrus.Debug(string(output))
 	return nil
-}
-
-//GetGo 获取go对象
-func GetGo() *Go {
-	tool := container.Get(GO)
-	if tool == nil {
-		tool = &Go{
-			name:     GO,
-			execPath: "go",
-		}
-		container.Set(tool)
-	}
-	return tool.(*Go)
 }

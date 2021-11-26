@@ -8,53 +8,32 @@ import (
 )
 
 type Httpx struct {
-	name     string
-	execPath string
-	desp     string
+	BaseTool
 }
 
 func newHttpx() Tool {
 	return &Httpx{
-		name: HTTPX,
-		desp: "并发可靠的http请求工具",
+		BaseTool: BaseTool{
+			name: HTTPX,
+			desp: "并发可靠的http请求工具",
+		},
 	}
 }
 
-//Name 获取工具名
-func (s *Httpx) Name() string {
-	return s.name
-}
-func (s *Httpx) Desp() string {
-	return s.desp
+func GetHttpx() *Httpx {
+	return container.Get(HTTPX).(*Httpx)
 }
 
 //ExecPath 获取工具执行路径
 func (s *Httpx) ExecPath() (string, error) {
-	if s.execPath == "" {
-		if err := s.download(); err != nil {
-			logger.Errorf("download %s failed,err:%v", s.Name(), err)
-			return "", err
-		}
-	}
-	return s.execPath, nil
+	return s.BaseTool.ExecPath(s.Download)
 }
 
-func (s *Httpx) download() error {
+func (s *Httpx) Download() (string, error) {
 	if err := GetGo().Install("github.com/projectdiscovery/httpx/cmd/httpx@latest"); err != nil {
-		return err
+		return "", err
 	}
-	s.execPath = build.Default.GOPATH + "/bin/httpx"
-	return nil
-}
-
-func GetHttpx() *Httpx {
-	if tool := container.Get(HTTPX); tool != nil {
-		return tool.(*Httpx)
-	}
-	container.Set(&Httpx{
-		name: HTTPX,
-	})
-	return container.Get(HTTPX).(*Httpx)
+	return build.Default.GOPATH + "/bin/httpx", nil
 }
 
 type HttpxRunConfig struct {

@@ -10,15 +10,15 @@ import (
 )
 
 type UrlCollector struct {
-	name     string
-	desp     string
-	execPath string
+	BaseTool
 }
 
 func newUrlCollector() Tool {
 	return &UrlCollector{
-		name: URL_COLLECTOR,
-		desp: "谷歌、百度、必应搜索引擎采集工具",
+		BaseTool{
+			name: URL_COLLECTOR,
+			desp: "谷歌、百度、必应搜索引擎采集工具",
+		},
 	}
 }
 
@@ -26,33 +26,16 @@ func GetUrlCollector() *UrlCollector {
 	return container.Get(URL_COLLECTOR).(*UrlCollector)
 }
 
-//Name 返回工具名称
-func (u *UrlCollector) Name() string {
-	return u.name
-}
-func (u *UrlCollector) Desp() string {
-	return u.desp
-}
-
-//ExecPath 返回执行路径,如果没有,则下载
 func (u *UrlCollector) ExecPath() (string, error) {
-	if len(u.execPath) == 0 {
-		if err := u.download(); err != nil {
-			logrus.Errorf("download %s failed,err:", err)
-			return "", err
-		}
-	}
-	return u.execPath, nil
+	return u.BaseTool.ExecPath(u.Download)
 }
 
-//donwload 下载工具
-func (u *UrlCollector) download() error {
+func (u *UrlCollector) Download() (string, error) {
 	if err := GetGo().Install("github.com/ShangRui-hash/url-collector"); err != nil {
 		logrus.Error("download url-collector failed:", err)
-		return err
+		return "", err
 	}
-	u.execPath = build.Default.GOPATH + "/bin/url-collector"
-	return nil
+	return build.Default.GOPATH + "/bin/url-collector", nil
 }
 
 //UrlCollectorCofnig 工具配置

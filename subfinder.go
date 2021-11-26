@@ -10,56 +10,31 @@ import (
 )
 
 type Subfinder struct {
-	name     string
-	desp     string
-	execPath string
+	BaseTool
 }
 
 func newSubfinder() Tool {
 	return &Subfinder{
-		name: SUBFINDER,
-		desp: "被动子域名收集工具",
+		BaseTool: BaseTool{
+			name: SUBFINDER,
+			desp: "被动子域名收集工具",
+		},
 	}
 }
 
-// Name 获取工具名称
-func (s *Subfinder) Name() string {
-	return s.name
-}
-
-//Desp 获取工具描述
-func (s *Subfinder) Desp() string {
-	return s.desp
-}
-
-//ExecPath 获取工具执行路径,如果不存在则下载
-func (s *Subfinder) ExecPath() (string, error) {
-	if s.execPath == "" {
-		if err := s.download(); err != nil {
-			logger.Errorf("download %s failed,err:%v", s.Name(), err)
-			return "", err
-		}
-	}
-	return s.execPath, nil
-}
-
-func (s *Subfinder) download() error {
-	if err := GetGo().Install("github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"); err != nil {
-		return err
-	}
-	s.execPath = build.Default.GOPATH + "/bin/subfinder"
-	return nil
-}
-
-//
 func GetSubfinder() *Subfinder {
-	if tool := container.Get(SUBFINDER); tool != nil {
-		return tool.(*Subfinder)
-	}
-	container.Set(&Subfinder{
-		name: SUBFINDER,
-	})
 	return container.Get(SUBFINDER).(*Subfinder)
+}
+
+func (s *Subfinder) ExecPath() (string, error) {
+	return s.BaseTool.ExecPath(s.Download)
+}
+
+func (s *Subfinder) Download() (string, error) {
+	if err := GetGo().Install("github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"); err != nil {
+		return "", err
+	}
+	return build.Default.GOPATH + "/bin/subfinder", nil
 }
 
 type SubfinderRunConfig struct {

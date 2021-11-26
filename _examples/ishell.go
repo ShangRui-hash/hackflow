@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 
 	"github.com/ShangRui-hash/hackflow"
 	"github.com/abiosoft/ishell"
@@ -16,6 +17,7 @@ import (
 func main() {
 	shell := ishell.New()
 	shell.SetPrompt("hackflow > ")
+	hackflow.SetDebug(true)
 	tools := hackflow.GetAllTools()
 	for i := range tools {
 		shell.AddCmd(&ishell.Cmd{
@@ -28,13 +30,19 @@ func main() {
 						logrus.Error("tools[i].ExecPath failed,err:", err)
 						return
 					}
-					fmt.Println(c.RawArgs)
+					params := []string{}
 					if len(c.RawArgs) > 1 {
-						CmdExec(execPath, c.RawArgs[1:]...)
-					} else {
-						CmdExec(execPath)
+						params = c.RawArgs[1:]
 					}
-
+					if strings.HasSuffix(execPath, ".py") {
+						err := hackflow.GetPython().Run(execPath, params...)
+						if err != nil {
+							logrus.Error("hackflow.GetPython.Run failed,err:", err)
+							return
+						}
+					} else {
+						CmdExec(execPath, params...)
+					}
 				}
 			}(tools[i]),
 		})

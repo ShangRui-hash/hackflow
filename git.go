@@ -3,20 +3,35 @@ package hackflow
 import (
 	"fmt"
 	"os/exec"
+
+	"github.com/serkanalgur/phpfuncs"
 )
 
 type Git struct {
-	name     string
-	execPath string
-	desp     string
+	BaseTool
 }
 
 func newGit() Tool {
 	return &Git{
-		name:     "git",
-		desp:     "git",
-		execPath: "git",
+		BaseTool: BaseTool{
+			name:     "git",
+			desp:     "git",
+			execPath: "git",
+		},
 	}
+}
+
+//GetGit 获取Git对象
+func GetGit() *Git {
+	return container.Get(GIT).(*Git)
+}
+
+func (g *Git) ExecPath() (string, error) {
+	return g.execPath, nil
+}
+
+func (g *Git) Download() (string, error) {
+	return "", nil
 }
 
 type CloneConfig struct {
@@ -25,52 +40,29 @@ type CloneConfig struct {
 	Depth    int
 }
 
-func (g *Git) Name() string {
-	return g.name
-}
-
-func (g *Git) Desp() string {
-	return g.desp
-}
-
-func (g *Git) ExecPath() (string, error) {
-	return g.execPath, nil
-}
-func (g *Git) download() error {
-	return nil
-}
-
 //Clone 克隆远程仓库
 func (g *Git) Clone(config CloneConfig) error {
 	args := []string{"clone"}
-	if config.Depth > 0 {
-		args = append(args, "--depth", fmt.Sprintf("%d", config.Depth))
+	if config.Depth != 0 {
+		args = append(args, []string{"--depth", fmt.Sprintf("%d", config.Depth)}...)
 	}
 	if config.Url != "" {
 		args = append(args, config.Url)
 	}
 	if config.SavePath != "" {
 		args = append(args, config.SavePath)
+		if phpfuncs.FileExists(config.SavePath) {
+			return nil
+		}
 	}
-	logger.Debugf("execPath:%s,args:%s", g.execPath, args)
-	output, err := exec.Command(g.execPath, args...).CombinedOutput()
+	execPath, err := g.ExecPath()
+	if err != nil {
+		return err
+	}
+	output, err := exec.Command(execPath, args...).CombinedOutput()
 	if err != nil {
 		logger.Errorf("exec.Command failed,err:%v,output:%s", err, output)
 		return err
 	}
-	logger.Debugf("exec.Command success,output:%s", output)
 	return nil
-}
-
-//GetGit 获取Git对象
-func GetGit() *Git {
-	if tool := container.Get(GIT); tool != nil {
-		return tool.(*Git)
-	}
-	tool := &Git{
-		name:     GIT,
-		execPath: "git",
-	}
-	container.Set(tool)
-	return tool
 }
