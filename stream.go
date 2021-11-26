@@ -67,8 +67,8 @@ func (s *Stream) GetDst() []chan string {
 	go func() {
 		logger.Debug("wait for all goroutine")
 		wg.Wait()
-		for _, dstCh := range s.dst {
-			close(dstCh)
+		for i := range s.dst {
+			close(s.dst[i])
 		}
 		logger.Debug("all goroutine done")
 	}()

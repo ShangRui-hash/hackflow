@@ -1,5 +1,7 @@
 package hackflow
 
+import "os/exec"
+
 type BaseTool struct {
 	name     string
 	desp     string
@@ -15,13 +17,16 @@ func (b *BaseTool) Desp() string {
 }
 
 func (b *BaseTool) ExecPath(download func() (string, error)) (string, error) {
-	if b.execPath == "" {
-		if execPath, err := download(); err != nil {
+	if b.execPath != "" {
+		return b.execPath, nil
+	}
+	execPath, err := exec.LookPath(b.name)
+	if err != nil {
+		if execPath, err = download(); err != nil {
 			logger.Errorf("download %s failed,err:%v", b.Name(), err)
 			return "", err
-		} else {
-			b.execPath = execPath
 		}
 	}
+	b.execPath = execPath
 	return b.execPath, nil
 }
