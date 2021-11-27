@@ -18,7 +18,7 @@ const (
 	PYTHON        = "python"
 	GIT           = "git"
 	SQLMAP        = "sqlmap"
-	URL_COLLECTOR = "url_collector"
+	URL_COLLECTOR = "url-collector"
 	DIRSEARCH     = "dirsearch"
 	KSUBDOMAIN    = "ksubdomain"
 	SUBFINDER     = "subfinder"
@@ -31,8 +31,18 @@ const (
 var (
 	container *Container
 	logger    = logrus.New()
-	SavePath  = build.Default.GOPATH + "/hackflow"
+
+	SavePath = build.Default.GOPATH + "/hackflow"
 )
+
+//SetDebug 是否开启debug模式
+func SetDebug(debug bool) {
+	if debug {
+		logger.SetLevel(logrus.DebugLevel)
+	} else {
+		logger.SetLevel(logrus.InfoLevel)
+	}
+}
 
 type Container struct {
 	allTools []string
@@ -99,15 +109,6 @@ func GetAllTools() (tools []Tool) {
 		tools = append(tools, container.Get(container.allTools[i]))
 	}
 	return tools
-}
-
-//SetDebug 是否开启debug模式
-func SetDebug(debug bool) {
-	if debug {
-		logger.SetLevel(logrus.DebugLevel)
-	} else {
-		logger.SetLevel(logrus.InfoLevel)
-	}
 }
 
 //parseConfig 解析config

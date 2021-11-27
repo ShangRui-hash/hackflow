@@ -1,47 +1,41 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"strings"
 
-	"github.com/ShangRui-hash/hackchain"
+	"github.com/ShangRui-hash/hackflow"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	// URLCollector, err := hackchain.GetUrlCollector()
-	// if err != nil {
-	// 	logrus.Error("hackchain.GetUrlCollector failed,err:", err)
-	// 	return
-	// }
-	// urlCh, err := URLCollector.Run(&hackchain.UrlCollectorCofnig{
-	// 	Keyword:      ".php?id=10",
-	// 	SearchEngine: "google",
-	// 	Proxy:        "http://127.0.0.1:7890",
+	hackflow.SetDebug(true)
+	// urlCollectorStdout, err := hackflow.GetUrlCollector().Run(&hackflow.UrlCollectorCofnig{
+	// 	Keyword:      ".php?id=1",
+	// 	SearchEngine: "baidu",
+	// 	Proxy:        "socks://127.0.0.1:7890",
+	// 	OuputFormat:  "protocol_domain",
 	// })
 	// if err != nil {
 	// 	logrus.Error("URLCollector.Run failed,err:", err)
 	// 	return
 	// }
-	// for url := range urlCh {
-	// 	fmt.Println(url)
-	// }
+	// // urlCh := make(chan string, 1024)
+	// // urlCh <- "https://mahara.org"
+	// // urlCh <- "http://www.baidu.com"
+	// // urlCh <- "https://www.360doc.com"
+	// // close(urlCh)
 
-	dirSearch, err := hackchain.GetDirSearch(true)
-	if err != nil {
-		logrus.Error("hackchain.GetDirSearch failed,err:", err)
-		return
-	}
-	dirSearch.SetDebug(false)
-	resultCh, err := dirSearch.Run(hackchain.DirSearchConfig{
-		TargetURL: "www.baidu.com",
-		FullURL:   true,
+	dirsearchStdout, err := hackflow.GetDirSearch().Run(strings.NewReader("https://mahara.org\nhttp://www.baidu.com\nhttps://www.360doc.com\n"), hackflow.DirSearchConfig{
+		FullURL: true,
 	})
 	if err != nil {
 		logrus.Error("dirSearch.Run failed,err:", err)
 		return
 	}
-	for result := range resultCh {
-		fmt.Printf("%+v\n", result)
+	scanner := bufio.NewScanner(dirsearchStdout)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
 	}
-
 }

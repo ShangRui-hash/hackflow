@@ -1,7 +1,7 @@
 package hackflow
 
 import (
-	"bufio"
+	"io"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -22,7 +22,7 @@ func newDirSearch() Tool {
 	}
 }
 
-func GetDirSearch(isDebug bool) *DirSearch {
+func GetDirSearch() *DirSearch {
 	return container.Get(DIRSEARCH).(*DirSearch)
 }
 
@@ -62,7 +62,6 @@ func (d *DirSearch) Download() (string, error) {
 }
 
 type DirSearchConfig struct {
-	TargetURL       string   `flag:"-u"`
 	HTTPMethod      string   `flag:"-m"`
 	FullURL         bool     `flag:"--full-url"`
 	RandomAgent     bool     `flag:"--random-agent"`
@@ -71,34 +70,32 @@ type DirSearchConfig struct {
 	Subdirs         []string `flag:"--subdirs"`
 }
 
-func (d *DirSearch) Run(config DirSearchConfig) (chan *DirSearchResult, error) {
+func (d *DirSearch) Run(reader io.Reader, config DirSearchConfig) (io.Reader, error) {
 	execPath, err := d.ExecPath()
 	if err != nil {
 		return nil, err
 	}
-	args := []string{execPath, "--no-color"}
+	args := []string{execPath, "--no-color", "--stdin"}
 	args = append(args, parseConfig(config)...)
 	cmd := exec.Command("python3", args...)
+	cmd.Stdin = reader
+	logger.Debug(cmd.String())
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		logger.Error("cmd.StdoutPipe failed,err:", err)
 		return nil, err
 	}
-	if err := cmd.Start(); err != nil {
-		logger.Error("Execute failed when Start:" + err.Error())
-		return nil, err
-	}
-	urlCh := make(chan *DirSearchResult, 1024)
+	//3.执行命令
 	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			if result := d.ParseResult(scanner.Text()); result != nil {
-				urlCh <- result
-			}
+		if err := cmd.Start(); err != nil {
+			logger.Error("Execute failed when Start:" + err.Error())
 		}
-		close(urlCh)
+		if err := cmd.Wait(); err != nil {
+			logger.Error("Execute failed when Wait:" + err.Error())
+		}
 	}()
-	return urlCh, nil
+
+	//1.获取标准输出
+	return stdout, nil
 }
 
 func (d *DirSearch) ParseResult(line string) (result *DirSearchResult) {
