@@ -43,6 +43,8 @@ type SubfinderRunConfig struct {
 	Domain                         string `flag:"-d"`
 	RoutineCount                   int    `flag:"-t"`
 	RemoveWildcardAndDeadSubdomain bool   `flag:"-nW"`
+	OutputInHostIPFormat           bool   `flag:"-oI"`
+	OutputInJsonLineFormat         bool   `flag:"-oJ"`
 }
 
 func (s *Subfinder) Run(config *SubfinderRunConfig) (subdomainCh chan string, err error) {
